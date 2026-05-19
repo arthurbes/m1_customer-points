@@ -1,0 +1,25 @@
+{
+    "name": "micro1ai/customer-points-cart",
+    "description": "Shopping Cart Microservice with Reward Points Management",
+    "type": "project",
+    "require": {
+        "php": "8.5.6",
+        "marko/framework": "0.6.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "test": "pest"
+    }
+}
