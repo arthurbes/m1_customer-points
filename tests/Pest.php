@@ -103,8 +103,13 @@ class TestClient
             return $this->controller->getPointsHistory($requestData);
         }
 
-        // POST /points/earn
-        if ($method === 'POST' && $path === '/points/earn') {
+        // POST /admin/points/grant
+        if ($method === 'POST' && $path === '/admin/points/grant') {
+            return $this->controller->forceGrantPoints($requestData);
+        }
+
+        // POST /admin/points/earn
+        if ($method === 'POST' && $path === '/admin/points/earn') {
             return $this->controller->earnPoints($requestData);
         }
 

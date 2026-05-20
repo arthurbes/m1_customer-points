@@ -71,19 +71,6 @@ it('can view reward points balance', function () {
         ->and($response['body']['data']['balance'])->toBe(5000);
 });
 
-it('can earn reward points', function () {
-    $client = createClient();
-    $headers = ['X-Customer-Token' => 'token-cust-003'];
-    $body = ['amount' => 25.00];
-
-    $response = $client->request('POST', '/points/earn', $headers, $body);
-
-    expect($response['status'])->toBe(200)
-        ->and($response['body']['success'])->toBeTrue()
-        ->and($response['body']['data']['points_earned'])->toBe(250)
-        ->and($response['body']['data']['new_balance'])->toBe(250);
-});
-
 it('requires authentication to access cart', function () {
     $client = createClient();
     $response = $client->request('GET', '/cart');
@@ -99,4 +86,29 @@ it('requires authentication to access points', function () {
 
     expect($response['status'])->toBe(401)
         ->and($response['body']['success'])->toBeFalse();
+});
+
+it('requires admin access to earn points to a customer', function () {
+    $client = createClient();
+    $response = $client->request('POST', '/admin/points/earn');
+
+    expect($response['status'])->toBe(403)
+        ->and($response['body']['success'])->toBeFalse()
+        ->and($response['body']['message'])->toContain('Forbidden');
+});
+
+it('can earn reward points as admin', function () {
+    $client = createClient();
+    $headers = ['X-Admin-Token' => 'token-admin-001'];
+
+    $body = [
+        'customer_id' => 'cust-003',
+        'amount' => 25.00
+    ];
+
+    $response = $client->request('POST', '/admin/points/earn', $headers, $body);
+
+    expect($response['status'])->toBe(200)
+        ->and($response['body']['success'])->toBeTrue()
+        ->and($response['body']['message'])->toContain('250 points');
 });

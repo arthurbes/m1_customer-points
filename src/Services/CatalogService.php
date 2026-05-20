@@ -11,11 +11,11 @@ namespace App\Services;
 class CatalogService
 {
     private static array $products = [
-        'prod-001' => ['name' => 'Mouse Wireless',   'price' => 29.99,  'in_stock' => true],
-        'prod-002' => ['name' => 'Teclado Mecânico',  'price' => 89.99,  'in_stock' => true],
-        'prod-003' => ['name' => 'Hub USB-C',         'price' => 45.00,  'in_stock' => true],
-        'prod-004' => ['name' => 'Suporte Monitor',   'price' => 35.00,  'in_stock' => false],
-        'prod-005' => ['name' => 'Webcam HD',         'price' => 59.99,  'in_stock' => true],
+        'prod-001' => ['name' => 'Mouse Wireless', 'price' => 29.99, 'in_stock' => true, 'stock' => 5],
+        'prod-002' => ['name' => 'Teclado Mecânico', 'price' => 89.99, 'in_stock' => true, 'stock' => 5],
+        'prod-003' => ['name' => 'Hub USB-C', 'price' => 45.00, 'in_stock' => true, 'stock' => 5],
+        'prod-004' => ['name' => 'Suporte Monitor', 'price' => 35.00, 'in_stock' => false, 'stock' => 5],
+        'prod-005' => ['name' => 'Webcam HD', 'price' => 59.99, 'in_stock' => true, 'stock' => 5],
     ];
 
     public static function getProduct(string $productId): ?array
@@ -38,5 +38,26 @@ class CatalogService
     public static function isInStock(string $productId): bool
     {
         return self::$products[$productId]['in_stock'] ?? false;
+    }
+
+    public static function setStock(string $productId, int $quantity): void
+    {
+        if (!isset(self::$products[$productId])) {
+            throw new Exception('Product not found');
+        }
+        self::$products[$productId]['in_stock'] = ($quantity > 0);
+    }
+
+    public static function getStock(string $productId): int
+    {
+        return self::$products[$productId]['in_stock'] ? 1 : 0;
+    }
+
+    public static function reduceStock(string $productId, int $quantity): void
+    {
+        if (!isset(self::$products[$productId])) {
+            throw new Exception('Product not found');
+        }
+        self::$products[$productId]['in_stock'] = ($quantity > 0);
     }
 }

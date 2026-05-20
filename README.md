@@ -8,14 +8,14 @@ Shopping cart microservice with reward points management, built on the **Marko F
 
 ```
 src/
-├── Routes.php                    Route definitions (9 endpoints)
+├── Routes.php                    Route definitions (11 endpoints)
 ├── Controllers/
 │   └── CartController.php        Cart CRUD + reward points logic
 ├── Models/
 │   ├── CartItem.php              Cart item with subtotal calculation
 │   └── RewardAccount.php         Points balance, earn/redeem, history
 └── Services/
-    ├── AuthService.php           Mock external customer identity provider
+    ├── AuthService.php           Mock external customer/admin identity provider
     └── CatalogService.php        Mock external product catalog
 ```
 
@@ -30,6 +30,12 @@ Every endpoint requires an `X-Customer-Token` header. Token format: `token-{cust
 | `cust-001`  | Maria Silva   | gold   | `token-cust-001`    |
 | `cust-002`  | João Santos   | silver | `token-cust-002`    |
 | `cust-003`  | Ana Oliveira  | bronze | `token-cust-003`    |
+
+For admin endpoints, the token format is `token-{adminId}`:
+
+| Admin ID | Admin Name | Token |
+|--------|------------|-------|
+| `admin-001`  | Admin 1 | `token-admin-001`    |
 
 ## API Endpoints
 
@@ -49,8 +55,14 @@ Every endpoint requires an `X-Customer-Token` header. Token format: `token-{cust
 |--------|---------------------|--------------------------------------|----------------|
 | `GET`  | `/points`           | Get points balance                   | —              |
 | `GET`  | `/points/history`   | Get transaction history              | —              |
-| `POST` | `/points/earn`      | Earn points from a dollar amount     | `{ amount }`   |
 | `POST` | `/cart/apply-points` | Apply points as discount on cart    | `{ points }`   |
+
+## Admin
+
+| Method | Path                | Description                          | Body           |
+|--------|---------------------|--------------------------------------|----------------|
+| `POST` | `/admin/points/grant`  | Grants a number of points to a customer     | `{ "customer_id": "cust-001", "points": 1000 }` |
+| `POST` | `/admin/points/earn`  | Grants points based on an amount to a customer     | `{ "customer_id": "cust-001", "amount": 1000 }` |
 
 **Points rules:**
 - Earn rate: **10 points per $1.00**

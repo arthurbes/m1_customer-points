@@ -20,8 +20,14 @@ class RewardAccount
         $this->balance = $initialBalance;
     }
 
-    public function getCustomerId(): string { return $this->customerId; }
-    public function getBalance(): int { return $this->balance; }
+    public function getCustomerId(): string
+    {
+        return $this->customerId;
+    }
+    public function getBalance(): int
+    {
+        return $this->balance;
+    }
 
     /** Credit points to the account. Points must be positive. */
     public function earn(int $points, string $description): void
@@ -31,8 +37,11 @@ class RewardAccount
         }
         $this->balance += $points;
         $this->transactions[] = [
-            'type' => 'earn', 'points' => $points,
-            'description' => $description, 'balance' => $this->balance, 'timestamp' => date('c'),
+            'type' => 'earn',
+            'points' => $points,
+            'description' => $description,
+            'balance' => $this->balance,
+            'timestamp' => date('c'),
         ];
     }
 
@@ -44,13 +53,19 @@ class RewardAccount
         }
         $this->balance -= $points;
         $this->transactions[] = [
-            'type' => 'redeem', 'points' => $points,
-            'description' => $description, 'balance' => $this->balance, 'timestamp' => date('c'),
+            'type' => 'redeem',
+            'points' => $points,
+            'description' => $description,
+            'balance' => $this->balance,
+            'timestamp' => date('c'),
         ];
         return true;
     }
 
-    public function getHistory(): array { return $this->transactions; }
+    public function getHistory(): array
+    {
+        return $this->transactions;
+    }
 
     /** 10 points per $1.00 */
     public static function calculateEarnPoints(float $amount): int

@@ -47,6 +47,15 @@ class CartController
         return $customer['id'];
     }
 
+    private function requireAdmin(array $headers): array
+    {
+        $admin = AuthService::authenticateAdmin($headers);
+        if (!$admin) {
+            throw new Exception('Forbidden: Admin access required', 403);
+        }
+        return $admin;
+    }
+
     /** GET /cart */
     public function viewCart(array $requestData): array
     {
@@ -183,29 +192,6 @@ class CartController
         }
     }
 
-    /** POST /points/earn — Body: { amount } (dollar amount to convert to points) */
-    public function earnPoints(array $requestData): array
-    {
-        try {
-            $customerId = $this->requireAuth($requestData['headers'] ?? []);
-            $amount = $requestData['body']['amount'] ?? null;
-
-            if ($amount === null || !is_numeric($amount) || $amount <= 0) {
-                throw new Exception('Amount must be a positive number', 400);
-            }
-
-            $amount = (float) $amount;
-            $points = RewardAccount::calculateEarnPoints($amount);
-            $account = $this->rewardAccounts[$customerId] ?? new RewardAccount($customerId);
-            $account->earn($points, sprintf('Earned from $%.2f purchase', $amount));
-            $this->rewardAccounts[$customerId] = $account;
-
-            return ['status' => 200, 'body' => ['success' => true, 'data' => ['points_earned' => $points, 'new_balance' => $account->getBalance()]]];
-        } catch (Exception $e) {
-            return $this->errorResponse($e);
-        }
-    }
-
     /** POST /cart/apply-points — Body: { points } (number of points to redeem as discount) */
     public function applyPoints(array $requestData): array
     {
@@ -238,11 +224,74 @@ class CartController
             }
             $this->rewardAccounts[$customerId] = $account;
 
-            return ['status' => 200, 'body' => ['success' => true, 'data' => [
-                'cart_total' => round($cartTotal, 2), 'discount' => $discount,
-                'final_total' => round($cartTotal - $discount, 2),
-                'points_used' => $points, 'points_balance' => $account->getBalance(),
-            ]]];
+            return [
+                'status' => 200,
+                'body' => [
+                    'success' => true,
+                    'data' => [
+                        'cart_total' => round($cartTotal, 2),
+                        'discount' => $discount,
+                        'final_total' => round($cartTotal - $discount, 2),
+                        'points_used' => $points,
+                        'points_balance' => $account->getBalance(),
+                    ]
+                ]
+            ];
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /** POST /admin/points/grant — Body: { customer_id, points } (number of points to redeem as discount) */
+    public function forceGrantPoints(array $requestData): array
+    {
+        try {
+            $requesterId = $this->requireAuth($requestData['headers'] ?? []);
+
+            $targetCustomerId = $requestData['body']['customer_id'] ?? null;
+            $points = $requestData['body']['points'] ?? 0;
+            $account = $this->rewardAccounts[$targetCustomerId];
+
+            $account->earn($points, 'Admin (' . $requesterId . ') override grant');
+
+            return [
+                'status' => 200,
+                'body' => [
+                    'success' => true,
+                    'message' => "Points granted to customer {$targetCustomerId}: {$points} points."
+                ]
+            ];
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /** POST /admin/points/earn — Body: { customer_id, amount } (number of points to redeem as discount) */
+    public function earnPoints(array $requestData): array
+    {
+        try {
+            $admin = $this->requireAdmin($requestData['headers'] ?? []);
+
+            $targetCustomerId = $requestData['body']['customer_id'] ?? null;
+
+            $amount = $requestData['body']['amount'] ?? null;
+
+            if ($amount === null || !is_numeric($amount) || $amount <= 0) {
+                throw new Exception('Amount must be a positive number', 400);
+            }
+
+            $amount = (float) $amount;
+            $points = RewardAccount::calculateEarnPoints($amount);
+            $account = $this->rewardAccounts[$targetCustomerId];
+            $account->earn($points, 'Admin (' . $admin['name'] . ') override earn');
+
+            return [
+                'status' => 200,
+                'body' => [
+                    'success' => true,
+                    'message' => "Points earned to customer {$targetCustomerId}: {$points} points."
+                ]
+            ];
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }

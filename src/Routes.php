@@ -19,15 +19,16 @@ class Routes
     public static function define(): array
     {
         return [
-            ['method' => 'GET',    'path' => '/cart',              'handler' => [CartController::class, 'viewCart']],
-            ['method' => 'POST',   'path' => '/cart/items',        'handler' => [CartController::class, 'addItem']],
-            ['method' => 'PUT',    'path' => '/cart/items/{id}',   'handler' => [CartController::class, 'updateItem']],
-            ['method' => 'DELETE', 'path' => '/cart/items/{id}',   'handler' => [CartController::class, 'removeItem']],
-            ['method' => 'DELETE', 'path' => '/cart',              'handler' => [CartController::class, 'clearCart']],
-            ['method' => 'GET',    'path' => '/points',            'handler' => [CartController::class, 'getPoints']],
-            ['method' => 'GET',    'path' => '/points/history',    'handler' => [CartController::class, 'getPointsHistory']],
-            ['method' => 'POST',   'path' => '/points/earn',       'handler' => [CartController::class, 'earnPoints']],
-            ['method' => 'POST',   'path' => '/cart/apply-points', 'handler' => [CartController::class, 'applyPoints']],
+            ['method' => 'GET', 'path' => '/cart', 'handler' => [CartController::class, 'viewCart']],
+            ['method' => 'POST', 'path' => '/cart/items', 'handler' => [CartController::class, 'addItem']],
+            ['method' => 'PUT', 'path' => '/cart/items/{id}', 'handler' => [CartController::class, 'updateItem']],
+            ['method' => 'DELETE', 'path' => '/cart/items/{id}', 'handler' => [CartController::class, 'removeItem']],
+            ['method' => 'DELETE', 'path' => '/cart', 'handler' => [CartController::class, 'clearCart']],
+            ['method' => 'GET', 'path' => '/points', 'handler' => [CartController::class, 'getPoints']],
+            ['method' => 'GET', 'path' => '/points/history', 'handler' => [CartController::class, 'getPointsHistory']],
+            ['method' => 'POST', 'path' => '/cart/apply-points', 'handler' => [CartController::class, 'applyPoints']],
+            ['method' => 'POST', 'path' => '/admin/points/grant', 'handler' => [CartController::class, 'forceGrantPoints']],
+            ['method' => 'POST', 'path' => '/admin/points/earn', 'handler' => [CartController::class, 'earnPoints']],
         ];
     }
 }
