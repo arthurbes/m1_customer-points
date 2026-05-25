@@ -118,6 +118,11 @@ class TestClient
             return $this->controller->applyPoints($requestData);
         }
 
+        // POST /admin/points/earn-legacy
+        if ($method === 'POST' && $path === '/admin/points/earn-legacy') {
+            return $this->controller->earnPointsLegacy($requestData);
+        }
+
         return [
             'status' => 404,
             'body' => [
