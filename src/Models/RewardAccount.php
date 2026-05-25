@@ -13,11 +13,13 @@ class RewardAccount
     private string $customerId;
     private int $balance;
     private array $transactions = [];
+    private string $tier;
 
-    public function __construct(string $customerId, int $initialBalance = 0)
+    public function __construct(string $customerId, int $initialBalance = 0, string $tier = 'bronze')
     {
         $this->customerId = $customerId;
         $this->balance = $initialBalance;
+        $this->tier = 'bronze';
     }
 
     public function getCustomerId(): string
@@ -27,6 +29,15 @@ class RewardAccount
     public function getBalance(): int
     {
         return $this->balance;
+    }
+    public function getTier(): string
+    {
+        return $this->tier;
+    }
+
+    public function setTier(string $tier): void
+    {
+        $this->tier = $tier;
     }
 
     /** Credit points to the account. Points must be positive. */
@@ -68,9 +79,39 @@ class RewardAccount
     }
 
     /** 10 points per $1.00 */
-    public static function calculateEarnPoints(float $amount): int
+    public static function calculateEarnPoints(float $amount, string $tier): int
     {
-        return (int) floor($amount * 10);
+        $multiplier = 10;
+
+        if ($tier == 'gold') {
+            $multiplier = 20;
+        } elseif ($tier == 'silver') {
+            $multiplier = 15;
+        }
+
+        if ($amount > 1000) {
+            return (int) floor($amount * 20);
+        }
+
+        return (int) floor($amount * $multiplier);
+    }
+
+    /** 10 points per $1.00 */
+    public function calculateMyEarnPoints(float $amount): int
+    {
+        $multiplier = 10;
+
+        if ($this->tier == 'gold') {
+            $multiplier = 25;
+        } elseif ($this->tier == 'silver') {
+            $multiplier = 18;
+        }
+
+        if ($amount > 1000) {
+            return (int) floor($amount * 20);
+        }
+
+        return (int) floor($amount * $multiplier);
     }
 
     /** 1 point = $0.01 */
@@ -81,6 +122,6 @@ class RewardAccount
 
     public function toArray(): array
     {
-        return ['customer_id' => $this->customerId, 'balance' => $this->balance];
+        return ['customer_id' => $this->customerId, 'balance' => $this->balance, 'tier' => 'bronze'];
     }
 }

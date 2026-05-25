@@ -32,9 +32,9 @@ class CartController
             'cust-003' => [],
         ];
         $this->rewardAccounts = [
-            'cust-001' => new RewardAccount('cust-001', 5000),
-            'cust-002' => new RewardAccount('cust-002', 1200),
-            'cust-003' => new RewardAccount('cust-003', 0),
+            'cust-001' => new RewardAccount('cust-001', 5000, 'gold'),
+            'cust-002' => new RewardAccount('cust-002', 1200, 'silver'),
+            'cust-003' => new RewardAccount('cust-003', 0, 'bronze'),
         ];
     }
 
@@ -197,16 +197,9 @@ class CartController
     {
         try {
             $customerId = $this->requireAuth($requestData['headers'] ?? []);
-            $points = $requestData['body']['points'] ?? null;
-
-            if ($points === null || !is_int($points) || $points < 1) {
-                throw new Exception('Points must be a positive integer', 400);
-            }
+            $points = (int) ($requestData['body']['points'] ?? 0);
 
             $items = $this->carts[$customerId] ?? [];
-            if (empty($items)) {
-                throw new Exception('Cart is empty', 422);
-            }
 
             $cartTotal = 0.0;
             foreach ($items as $item) {
@@ -214,14 +207,8 @@ class CartController
             }
 
             $discount = RewardAccount::pointsToDollars($points);
-            if ($discount > $cartTotal) {
-                throw new Exception(sprintf('Discount ($%.2f) exceeds cart total ($%.2f)', $discount, $cartTotal), 422);
-            }
-
             $account = $this->rewardAccounts[$customerId] ?? new RewardAccount($customerId);
-            if (!$account->redeem($points, sprintf('Applied %d points to cart', $points))) {
-                throw new Exception('Insufficient points balance', 422);
-            }
+            $account->redeem($points, sprintf('Applied %d points to cart', $points));
             $this->rewardAccounts[$customerId] = $account;
 
             return [
@@ -246,13 +233,13 @@ class CartController
     public function forceGrantPoints(array $requestData): array
     {
         try {
-            $requesterId = $this->requireAuth($requestData['headers'] ?? []);
+            $admin = $this->requireAdmin($requestData['headers'] ?? []);
 
             $targetCustomerId = $requestData['body']['customer_id'] ?? null;
             $points = $requestData['body']['points'] ?? 0;
             $account = $this->rewardAccounts[$targetCustomerId];
 
-            $account->earn($points, 'Admin (' . $requesterId . ') override grant');
+            $account->earn($points, 'Admin (' . $admin['name'] . ') override grant');
 
             return [
                 'status' => 200,
@@ -281,7 +268,7 @@ class CartController
             }
 
             $amount = (float) $amount;
-            $points = RewardAccount::calculateEarnPoints($amount);
+            $points = RewardAccount::calculateEarnPoints($amount, $this->rewardAccounts[$targetCustomerId]->getTier());
             $account = $this->rewardAccounts[$targetCustomerId];
             $account->earn($points, 'Admin (' . $admin['name'] . ') override earn');
 
@@ -292,6 +279,53 @@ class CartController
                     'message' => "Points earned to customer {$targetCustomerId}: {$points} points."
                 ]
             ];
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /** POST /admin/points/earn-legacy — Body: { customer_id, amount } (number of points to redeem as discount) */
+    public function earnPointsLegacy(array $requestData): array
+    {
+        try {
+            $admin = $this->requireAdmin($requestData['headers'] ?? []);
+
+            $targetCustomerId = $requestData['body']['customer_id'] ?? null;
+
+            $amount = $requestData['body']['amount'] ?? null;
+
+            if ($amount === null || !is_numeric($amount) || $amount <= 0) {
+                throw new Exception('Amount must be a positive number', 400);
+            }
+
+            $amount = (float) $amount;
+            $account = $this->rewardAccounts[$targetCustomerId];
+            $account->setTier(AuthService::getCustomer($targetCustomerId)['tier']);
+            $points = $account->calculateMyEarnPoints($amount);
+            $account->earn($points, 'Admin (' . $admin['name'] . ') override earn');
+
+            return [
+                'status' => 200,
+                'body' => [
+                    'success' => true,
+                    'message' => "Points earned to customer {$targetCustomerId}: {$points} points."
+                ]
+            ];
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /** GET /admin/points */
+    public function getAllPointsBalances(array $requestData): array
+    {
+        try {
+            $this->requireAdmin($requestData['headers'] ?? []);
+            $rewardAccountBalances = [];
+            foreach ($this->rewardAccounts as $account) {
+                $rewardAccountBalances[$account->getCustomerId()] = $account->getBalance();
+            }
+            return ['status' => 200, 'body' => ['success' => true, 'data' => $rewardAccountBalances]];
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }

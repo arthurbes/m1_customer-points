@@ -29,6 +29,7 @@ class Routes
             ['method' => 'POST', 'path' => '/cart/apply-points', 'handler' => [CartController::class, 'applyPoints']],
             ['method' => 'POST', 'path' => '/admin/points/grant', 'handler' => [CartController::class, 'forceGrantPoints']],
             ['method' => 'POST', 'path' => '/admin/points/earn', 'handler' => [CartController::class, 'earnPoints']],
+            ['method' => 'POST', 'path' => '/admin/points/earn-legacy', 'handler' => [CartController::class, 'earnPointsLegacy']],
         ];
     }
 }
